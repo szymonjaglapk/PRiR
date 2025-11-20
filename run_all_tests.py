@@ -16,7 +16,7 @@ SCRIPTS: Dict[str, str] = {
 }
 
 MPI_RESULTS_FILE: str = "results_mpi_multi.csv"
-MPI_PROCS_TO_TEST: List[int] = [1, 2, 4]
+MPI_PROCS_TO_TEST: List[int] = [1, 8, 16, 32]
 
 # Mapowanie: nazwa pakietu pip -> nazwa modułu do importu
 REQUIRED_PACKAGES: Dict[str, str] = {

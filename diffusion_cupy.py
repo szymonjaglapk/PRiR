@@ -8,7 +8,7 @@ from typing import List, Tuple
 
 # --- KONFIGURACJA ---
 SIZES: List[int] = [500, 1000, 2000]
-STEPS: int = 1000
+STEPS: int = 500
 RATE: float = 0.3
 BRIGHTNESS: float = 5.0
 DISPLAY_INTERVAL: int = 50

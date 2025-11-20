@@ -6,7 +6,7 @@ from PIL import Image
 
 # --- Parametry ---
 sizes = [500, 1000, 2000]
-steps = 1000
+steps = 500
 rate = 0.3
 brightness = 5.0
 display_interval = 50
