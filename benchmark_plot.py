@@ -8,7 +8,7 @@ import os
 import numpy as np
 from typing import Dict, List, Optional, Any, Union, Set
 
-# Definicje typów dla lepszej czytelności
+# --- DEFINICJE TYPÓW ---
 # Słownik zagnieżdżony: liczba wątków/procesów -> rozmiar -> czas
 NestedResults = Dict[int, Dict[int, float]]
 # Słownik płaski: rozmiar -> czas
@@ -16,6 +16,7 @@ FlatResults = Dict[int, float]
 # Główna struktura danych
 BenchmarkData = Dict[str, Union[NestedResults, FlatResults]]
 
+# --- KONFIGURACJA ---
 FILES = {
     "numpy": "results_numpy.csv",
     "numba": "results_numba.csv",
@@ -67,13 +68,13 @@ def load_data() -> BenchmarkData:
 
 def get_common_sizes(data: BenchmarkData) -> List[int]:
     """Zwraca posortowaną listę rozmiarów siatki występujących w wynikach."""
-    sizes: Set[int] = set(data["numpy"].keys())
+    sizes: Set[int] = set(data["numpy"].keys())  
     if data["cupy"]:
-        sizes.update(data["cupy"].keys())
+        sizes.update(data["cupy"].keys())  
     if data["numba"]:
         # Pobieramy klucze z pierwszego dostępnego zestawu wątków
-        first_thread_key = list(data["numba"].keys())[0]
-        sizes.update(data["numba"][first_thread_key].keys())
+        first_thread_key = list(data["numba"].keys())[0]  
+        sizes.update(data["numba"][first_thread_key].keys())  
     return sorted(list(sizes))
 
 
@@ -86,19 +87,15 @@ def add_line_labels(x: List[float], y: List[float], ax: Optional[Axes] = None) -
                     ha='center', fontsize=9, fontweight='bold')
 
 
-def add_bar_labels(rects: BarContainer, ax: Optional[Axes] = None) -> None:
+def add_bar_labels(rects: BarContainer, ax: Optional[Axes] = None, rotation: int = 0) -> None:
     """Dodaje etykiety wartości nad słupkami wykresu."""
     if ax is None:
         ax = plt.gca()
-    ax.bar_label(rects, fmt='%.2f', padding=3, fontsize=9)
+    ax.bar_label(rects, fmt='%.2f', padding=3, fontsize=9, rotation=rotation)
 
 
 def plot_scaling(data_nested: NestedResults, sizes: List[int], method_name: str, x_label: str) -> None:
-    """
-    Generuje dwa wykresy dla metod równoległych (MPI/Numba):
-    1. Speedup (Przyśpieszenie)
-    2. Efficiency (Efektywność)
-    """
+    """Generuje wykresy Speedup (Przyśpieszenie) i Efficiency (Efektywność)."""
     if not data_nested:
         return
 
@@ -127,17 +124,13 @@ def plot_scaling(data_nested: NestedResults, sizes: List[int], method_name: str,
         plt.plot(x_vals, y_vals, marker='o', linewidth=2, label=f"Size {size}")
         add_line_labels(x_vals, y_vals)
 
-    # Linia idealnego przyśpieszenia liniowego
     plt.plot(threads_list, threads_list, 'k--', alpha=0.3, label="Ideal")
-
     plt.title(f"{method_name}: Przyśpieszenie (Speedup)", fontsize=14)
     plt.xlabel(x_label, fontsize=12)
     plt.ylabel("Przyśpieszenie (krotność)", fontsize=12)
     plt.xticks(threads_list)
     plt.grid(True, alpha=0.5)
     plt.legend()
-    plt.ylim(0, max(max_speedup * 1.1, max(threads_list) + 0.5))
-
     plt.tight_layout()
     plt.savefig(f"{OUTPUT_DIR}/scaling_speedup_{method_name.lower()}.png")
     plt.close()
@@ -172,41 +165,33 @@ def plot_scaling(data_nested: NestedResults, sizes: List[int], method_name: str,
     plt.xticks(threads_list)
     plt.grid(True, alpha=0.5)
     plt.legend()
-    plt.ylim(0, max(110.0, max_efficiency + 15))
-
     plt.tight_layout()
     plt.savefig(f"{OUTPUT_DIR}/scaling_efficiency_{method_name.lower()}.png")
     plt.close()
 
 
 def plot_best_comparison(data: BenchmarkData, sizes: List[int]) -> None:
-    """
-    Porównuje surowe czasy wykonania dla wszystkich metod.
-    Dla metod równoległych (MPI, Numba) wybiera najlepszy czas (najwięcej wątków).
-    """
+    """Porównuje surowe czasy wykonania (najlepsze wyniki każdej metody)."""
     plt.figure(figsize=(12, 8))
     bar_width = 0.2
     x = np.arange(len(sizes))
 
-    # Pobieranie czasów (default 0 jeśli brak danych)
-    times_numpy = [data["numpy"].get(s, 0) for s in sizes]
+    times_numpy = [data["numpy"].get(s, 0) for s in sizes]  
 
     times_numba = []
     times_mpi = []
 
     for s in sizes:
-        # Wyciągamy minimalny czas ze wszystkich konfiguracji wątków
-        numba_data: NestedResults = data["numba"]
+        numba_data: NestedResults = data["numba"]  
         n_vals = [numba_data[th][s] for th in numba_data if s in numba_data[th]]
         times_numba.append(min(n_vals) if n_vals else 0)
 
-        mpi_data: NestedResults = data["mpi"]
+        mpi_data: NestedResults = data["mpi"]  
         m_vals = [mpi_data[p][s] for p in mpi_data if s in mpi_data[p]]
         times_mpi.append(min(m_vals) if m_vals else 0)
 
-    times_cupy = [data["cupy"].get(s, 0) for s in sizes]
+    times_cupy = [data["cupy"].get(s, 0) for s in sizes]  
 
-    # Rysowanie słupków
     rects1 = plt.bar(x - 1.5 * bar_width, times_numpy, bar_width, label='NumPy', color='gray')
     rects2 = plt.bar(x - 0.5 * bar_width, times_numba, bar_width, label='Numba (Best)', color='royalblue')
     rects3 = plt.bar(x + 0.5 * bar_width, times_mpi, bar_width, label='MPI (Best)', color='forestgreen')
@@ -228,37 +213,34 @@ def plot_best_comparison(data: BenchmarkData, sizes: List[int]) -> None:
 
 
 def plot_relative_speedup_all(data: BenchmarkData, sizes: List[int]) -> None:
-    """
-    Pokazuje przyśpieszenie wszystkich metod względem referencyjnego NumPy.
-    Oś Y jest logarytmiczna, aby obsłużyć duże różnice (np. GPU).
-    """
+    """Pokazuje przyśpieszenie wszystkich metod względem NumPy (skala log)."""
     plt.figure(figsize=(12, 8))
 
     speedup_numba, speedup_mpi, speedup_cupy = [], [], []
     valid_sizes = []
 
     for s in sizes:
-        if s not in data["numpy"]:
+        if s not in data["numpy"]:  
             continue
 
-        t_base = data["numpy"][s]
+        t_base = data["numpy"][s]  
         valid_sizes.append(s)
 
         # Numba speedup
-        numba_data: NestedResults = data["numba"]
+        numba_data: NestedResults = data["numba"]  
         n_times = [numba_data[th][s] for th in numba_data if s in numba_data[th]]
         t_numba = min(n_times) if n_times else t_base
         speedup_numba.append(t_base / t_numba)
 
         # MPI speedup
-        mpi_data: NestedResults = data["mpi"]
+        mpi_data: NestedResults = data["mpi"]  
         m_times = [mpi_data[p][s] for p in mpi_data if s in mpi_data[p]]
         t_mpi = min(m_times) if m_times else t_base
         speedup_mpi.append(t_base / t_mpi)
 
         # CuPy speedup
-        if s in data["cupy"]:
-            speedup_cupy.append(t_base / data["cupy"][s])
+        if s in data["cupy"]:  
+            speedup_cupy.append(t_base / data["cupy"][s])  
         else:
             speedup_cupy.append(0)
 
@@ -280,20 +262,102 @@ def plot_relative_speedup_all(data: BenchmarkData, sizes: List[int]) -> None:
     plt.legend(loc='upper left')
     plt.grid(True, axis='y', alpha=0.3)
 
-    # Skala logarytmiczna z ludzkim formatowaniem (10, 100 zamiast 10^1, 10^2)
     plt.yscale('log')
     ax = plt.gca()
     ax.yaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.yaxis.get_major_formatter().set_scientific(False)
+    ax.yaxis.get_major_formatter().set_scientific(False)  
 
     add_bar_labels(r0)
     add_bar_labels(r1)
     add_bar_labels(r2)
     if has_cupy:
-        add_bar_labels(r3)
+        add_bar_labels(r3)  
 
     plt.tight_layout()
     plt.savefig(f"{OUTPUT_DIR}/relative_speedup_all.png")
+    plt.close()
+
+
+def plot_detailed_bar_comparison(data: BenchmarkData, sizes: List[int]) -> None:
+    """
+    Tworzy szczegółowy wykres słupkowy, gdzie każda konfiguracja (wątki/procesy)
+    ma swój własny słupek. Grupowanie odbywa się po rozmiarze siatki.
+    """
+    if not sizes:
+        return
+
+    # 1. Przygotowanie etykiet i danych
+    labels = [str(s) for s in sizes]
+    x = np.arange(len(labels))
+    width = 0.08  # Wąski słupek, aby zmieściło się ich dużo obok siebie
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Lista krotek do rysowania: (nazwa_legendy, lista_czasów_dla_rozmiarów, kolor)
+    bars_to_plot = []
+
+    # --- NumPy ---
+    times = [data["numpy"].get(s, 0) for s in sizes]  
+    bars_to_plot.append(("NumPy", times, "tab:blue"))
+
+    # --- Numba (sortujemy po liczbie wątków) ---
+    numba_data: NestedResults = data["numba"]  
+    if numba_data:
+        numba_threads = sorted(numba_data.keys())
+        # Paleta pomarańczowa: generujemy odcienie
+        if len(numba_threads) == 1:
+            orange_palette = [plt.cm.Oranges(0.6)]
+        else:
+            orange_palette = plt.cm.Oranges(np.linspace(0.4, 1.0, len(numba_threads)))
+
+        for i, th in enumerate(numba_threads):
+            times = [numba_data[th].get(s, 0) for s in sizes]
+            bars_to_plot.append((f"Numba ({th} thr)", times, orange_palette[i]))
+
+    # --- MPI (sortujemy po procesach) ---
+    mpi_data: NestedResults = data["mpi"]  
+    if mpi_data:
+        mpi_procs = sorted(mpi_data.keys())
+        # Paleta fioletowa
+        if len(mpi_procs) == 1:
+            purple_palette = [plt.cm.Purples(0.6)]
+        else:
+            purple_palette = plt.cm.Purples(np.linspace(0.4, 1.0, len(mpi_procs)))
+
+        for i, proc in enumerate(mpi_procs):
+            times = [mpi_data[proc].get(s, 0) for s in sizes]
+            bars_to_plot.append((f"MPI ({proc} proc)", times, purple_palette[i]))
+
+    # --- CuPy ---
+    if data["cupy"]:
+        times = [data["cupy"].get(s, 0) for s in sizes]  
+        bars_to_plot.append(("CuPy (GPU)", times, "tab:gray"))
+
+    # 2. Rysowanie słupków
+    # Obliczamy przesunięcie początkowe, żeby cała grupa była wyśrodkowana wokół punktu x
+    num_bars = len(bars_to_plot)
+    start_offset = -((num_bars - 1) * width) / 2
+
+    for i, (label, values, color) in enumerate(bars_to_plot):
+        offset = start_offset + i * width
+        rects = ax.bar(x + offset, values, width, label=label, color=color)
+
+        # Etykiety pionowe nad słupkami (obrócone o 90 stopni)
+        ax.bar_label(rects, fmt='%.1f', padding=3, fontsize=7, rotation=90)
+
+    # 3. Formatowanie wykresu
+    ax.set_ylabel('Czas obliczeń [s]', fontsize=12)
+    ax.set_xlabel('Rozmiar siatki (NxN)', fontsize=12)
+    ax.set_title('Szczegółowe porównanie wydajności wszystkich konfiguracji', fontsize=14)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=11)
+
+    # Legenda przesunięta na prawo, aby nie zasłaniała wykresu
+    ax.legend(bbox_to_anchor=(1.01, 1), loc='upper left', title="Metoda / Konfiguracja")
+    ax.grid(True, axis='y', linestyle='--', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(f"{OUTPUT_DIR}/porownanie_slupkowe_detal.png")
     plt.close()
 
 
@@ -305,15 +369,20 @@ def main() -> None:
         print("[ERROR] Brak danych do przetworzenia. Upewnij się, że pliki .csv istnieją.")
         return
 
-    # Generowanie wykresów
-    # rzutowanie typów (cast) jest tu domyślne dzięki definicji NestedResults,
-    # ale dla mypy data["numba"] może być Union, więc w ścisłym trybie wymagałoby checku.
-    # Tutaj zakładamy poprawność struktury z load_data.
+    print(f"Generowanie wykresów dla rozmiarów: {sizes}")
 
-    plot_scaling(data["numba"], sizes, "Numba", "Liczba wątków")
-    plot_scaling(data["mpi"], sizes, "MPI", "Liczba procesów")
+    # 1. Wykresy skalowania (Speedup/Efficiency)
+    plot_scaling(data["numba"], sizes, "Numba", "Liczba wątków")  
+    plot_scaling(data["mpi"], sizes, "MPI", "Liczba procesów")  
+
+    # 2. Wykresy porównawcze
     plot_best_comparison(data, sizes)
     plot_relative_speedup_all(data, sizes)
+
+    # 3. Nowy wykres szczegółowy
+    plot_detailed_bar_comparison(data, sizes)
+
+    print(f"Gotowe! Wykresy zapisano w katalogu: {OUTPUT_DIR}/")
 
 
 if __name__ == "__main__":
