@@ -1,0 +1,15 @@
+Filesystem           Size  Used Avail Use% Mounted on
+udev                  63G     0   63G   0% /dev
+tmpfs                 13G  984K   13G   1% /run
+/dev/vda5            433G   46G  366G  12% /
+tmpfs                 63G  536K   63G   1% /dev/shm
+tmpfs                5.0M     0  5.0M   0% /run/lock
+/dev/mapper/vg0-lv0  5.0T  853G  3.9T  18% /home
+/dev/loop0            67M   67M     0 100% /snap/core24/1196
+/dev/loop3            71M   71M     0 100% /snap/certbot/5057
+/dev/loop5           105M  105M     0 100% /snap/core/17212
+/dev/loop2            67M   67M     0 100% /snap/core24/1225
+/dev/loop4            64M   64M     0 100% /snap/core20/2682
+/dev/loop6            64M   64M     0 100% /snap/core20/2669
+/dev/loop7           105M  105M     0 100% /snap/core/17247
+/dev/loop1            71M   71M     0 100% /snap/certbot/4965
